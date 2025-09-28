@@ -1,40 +1,49 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
-import check from "./check";
 import { randomUUID } from "crypto";
 import build from "./build";
 import { exit } from "process";
+import Checker from "./checker";
+import { mkdir, writeFile } from "fs/promises";
+import printProblem from "./printProblem";
+import chalk from "chalk";
+import Problem from "./problem";
+import { InputError, InternalError } from "./errors";
 
 (async () => {
-  const packageJSON: { module: string | undefined; main: string | undefined } =
-    JSON.parse(readFileSync("package.json", "utf8"));
+  const packageJSON: { module: string | undefined; main: string | undefined } = JSON.parse(readFileSync("package.json", "utf8"));
   const entryPointPath = packageJSON.module ?? packageJSON.main;
   if (entryPointPath === undefined || !existsSync(entryPointPath)) {
     console.error("No entry point.");
     process.exit(1);
   }
-  const { program, code } = await build(resolve(entryPointPath));
-  const result = check(program.body, code);
-  if (result === true) {
-    console.log("Tree-shakable.");
-    return;
-  }
-  const uuid = randomUUID();
-  mkdirSync(`/tmp/is-tree-shakable`, { recursive: true });
-  const path = `/tmp/is-tree-shakable/${uuid}.js`;
-  writeFileSync(path, code);
-  if (result.length > 0) {
-    console.error("Not tree-shakable:");
-    for (const problem of result) {
-      console.error(`• ${problem}`);
+  const { program, code, sourceMap } = await build(resolve(entryPointPath));
+  const checker = new Checker(program, code, sourceMap);
+  let result: true | Problem[];
+  try {
+    result = await checker.check();
+  } catch (error) {
+    if (error instanceof InputError) {
+      console.error(error.message);
+    } else if (error instanceof InternalError) {
+      console.error(`Internal error: ${error.message}`);
+    } else {
+      console.error("Unknown error.");
     }
-    console.error(`Output at \`${path}\`.`);
+    exit(1);
+  }
+  if (result === true) return;
+  const uuid = randomUUID();
+  await mkdir(`/tmp/is-tree-shakable`, { recursive: true });
+  if (result.length > 0) {
+    for (const problem of result) await printProblem(problem);
+    console.error();
   } else {
-    console.error(
-      `Not tree-shakable. Cause unknown; check output at \`${path}\`.`
-    );
+    const path = `/tmp/is-tree-shakable/${uuid}.js`;
+    await writeFile(path, code);
+    console.error(`Not tree-shakable. Cause unknown; check output at ${chalk.blue(path)}.`);
   }
   exit(1);
 })();

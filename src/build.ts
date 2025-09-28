@@ -24,20 +24,13 @@ import { parse } from "acorn";
 const build = async (entryPointPath: string) => {
   const build = await rollup({
     input: "is-tree-shakable",
-    plugins: [
-      virtual({
-        "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}`,
-      }),
-    ],
+    plugins: [virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
     onwarn: () => {},
   });
-  const output = await build.generate({ format: "esm" });
-  const [{ code }] = output.output;
-  const program = parse(code, {
-    ecmaVersion: "latest",
-    sourceType: "module",
-  });
-  return { program, code };
+  const { output } = await build.generate({ format: "esm", sourcemap: true });
+  const [{ code, map }] = output;
+  const program = parse(code, { ecmaVersion: "latest", locations: true, sourceType: "module" });
+  return { program, code, sourceMap: map };
 };
 
 export default build;
