@@ -1,0 +1,6 @@
+{
+  "main": "build/index.js",
+  "scripts": {
+    "build": "../../../node_modules/.bin/tsc"
+  }
+}

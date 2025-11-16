@@ -1,5 +1,5 @@
 import { ExpressionStatement } from "acorn";
-import walk from "acorn-walk";
+import * as walk from "acorn-walk";
 import getNamesFromPattern from "./getNamesFromPattern";
 import Context from "./context";
 import Problem from "./problem";

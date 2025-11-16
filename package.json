@@ -5,7 +5,8 @@
   "types": "build/index.d.ts",
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest run"
   },
   "bin": {
     "is-tree-shakable": "build/index.js"
@@ -13,7 +14,8 @@
   "devDependencies": {
     "@tsconfig/recommended": "1.0.10",
     "@types/node": "24.5.2",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "4.0.9"
   },
   "dependencies": {
     "@rollup/plugin-virtual": "3.0.2",
