@@ -6,7 +6,7 @@ This is a command-line tree-shakability doctor for JavaScript packages. Compared
 tree-shakable but also pinpoints the root causes of non-tree-shakability in the JavaScript or TypeScript&nbsp;source.
 
 <p align="center">
-  <img src="example.png" />
+  <img src="https://raw.githubusercontent.com/software-mansion-labs/is-tree-shakable/refs/heads/main/example.png" />
 </p>
 
 ## Getting started
