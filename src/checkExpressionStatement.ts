@@ -10,14 +10,14 @@ const checkExpressionStatement = async (statement: ExpressionStatement, context:
   let skip = false;
   walk.simple(statement, {
     AssignmentExpression: (expression) => {
-      if (!getNamesFromPattern(expression.left, modifiedVariableNames)) skip = true;
+      skip ||= !getNamesFromPattern(expression.left, modifiedVariableNames);
     },
     UpdateExpression: (expression) => {
-      if (expression.argument.type !== "Identifier") {
+      if (expression.argument.type !== "Identifier" && expression.argument.type !== "MemberExpression") {
         skip = true;
         return;
       }
-      modifiedVariableNames.push(expression.argument.name);
+      skip ||= !getNamesFromPattern(expression.argument, modifiedVariableNames);
     },
   });
   if (skip) return null;
