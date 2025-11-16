@@ -1,5 +1,5 @@
 import { Pattern } from "acorn";
-import walk from "acorn-walk";
+import * as walk from "acorn-walk";
 
 type State = { names: string[]; result: boolean };
 

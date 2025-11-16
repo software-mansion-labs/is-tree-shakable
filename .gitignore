@@ -1,3 +1,4 @@
 .DS_Store
+/test/packages/**/build/
 build/
 node_modules/
