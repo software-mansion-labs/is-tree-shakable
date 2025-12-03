@@ -1,4 +1,5 @@
 .DS_Store
+/.idea/
 /test/packages/**/build/
 build/
 node_modules/
