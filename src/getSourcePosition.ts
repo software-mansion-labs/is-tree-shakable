@@ -1,7 +1,6 @@
 import { Node } from "acorn";
 import Context from "./context";
-import { dirname, join, relative, resolve } from "path";
-import { readFile } from "fs/promises";
+import { dirname, relative, resolve } from "path";
 import { InputError, InternalError } from "./errors";
 import { MappedPosition, NullableMappedPosition } from "source-map";
 import { cwd } from "process";
@@ -14,9 +13,7 @@ function assertMappedPositionValid(
   if (position.source === null || position.line === null || position.column === null) throw getError("Invalid source map.");
 }
 
-const SOURCE_MAP_REGEX = /\/\/[#@]\s*sourceMappingURL=([^\s]+)/;
-
-const getSourcePosition = async (context: Context, location: Node["loc"]): Promise<SourcePosition> => {
+const getSourcePosition = async (location: Node["loc"], context: Context): Promise<SourcePosition> => {
   if (location == null) throw new InternalError("`location` is nullish.");
   const internalSourceMapConsumer = await context.getSourceMapConsumer();
   const entryPointStart = internalSourceMapConsumer.originalPositionFor(location.start);
@@ -24,9 +21,9 @@ const getSourcePosition = async (context: Context, location: Node["loc"]): Promi
   const entryPointEnd = internalSourceMapConsumer.originalPositionFor(location.end);
   assertMappedPositionValid(entryPointEnd, (message) => new InternalError(message));
   const entryPointPath = entryPointStart.source;
-  const entryPointContent = await readFile(entryPointPath, "utf-8");
-  const sourceMapMatches = entryPointContent.match(SOURCE_MAP_REGEX);
-  if (sourceMapMatches === null) {
+  const entryPointDirectoryPath = dirname(entryPointPath);
+  const entryPointSourceMapConsumer = await context.getSourceMapConsumer(entryPointPath);
+  if (entryPointSourceMapConsumer === null) {
     if (entryPointPath.startsWith("build/") || entryPointPath.startsWith("dist/")) {
       throw new InputError("Missing source map.");
     }
@@ -36,9 +33,6 @@ const getSourcePosition = async (context: Context, location: Node["loc"]): Promi
       end: { line: entryPointEnd.line, column: entryPointEnd.column },
     };
   }
-  const entryPointDirectoryPath = dirname(entryPointPath);
-  const entryPointSourceMapPath = join(entryPointDirectoryPath, sourceMapMatches[1]);
-  const entryPointSourceMapConsumer = await context.getSourceMapConsumer(entryPointSourceMapPath);
   const sourceStart = entryPointSourceMapConsumer.originalPositionFor({ line: entryPointStart.line, column: entryPointStart.column });
   assertMappedPositionValid(sourceStart, (message) => new InputError(message));
   const sourceEnd = entryPointSourceMapConsumer.originalPositionFor({ line: entryPointEnd.line, column: entryPointEnd.column });

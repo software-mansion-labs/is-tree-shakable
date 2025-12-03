@@ -15,7 +15,8 @@ describe("CLI", () => {
   it("Correctly diagnoses non-tree-shakable package", async () => {
     const { code, output } = await runCli("non-tree-shakable");
     expect(code).toBe(1);
-    expect(output.match(/•/g)?.length).toBe(1);
-    expect(output).toContain("src/index.ts:4:0: Possibly side-effectful root-level expression.");
+    expect(output.match(/•/g)?.length).toBe(2);
+    expect(output).toContain("src/index.ts:4:0: Possibly side-effectful top-level expression.");
+    expect(output).toContain("src/index.ts:9:4: Possibly side-effectful expression in static context.");
   });
 });

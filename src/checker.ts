@@ -4,19 +4,31 @@ import getRootVariables from "./getRootVariables";
 import { SourceMap } from "rollup";
 import { SourceMapConsumer } from "source-map";
 import { readFile } from "fs/promises";
-import Context from "./context";
+import { dirname, join } from "path";
+import Context, { GetSourceMapConsumer } from "./context";
 import Problem from "./problem";
 import RootVariable from "./rootVariable";
 import { InternalError } from "./errors";
+import checkClassDeclaration from "./checkClassDeclaration";
+
+const INLINE_SOURCE_MAP_PREFIX = "data:";
+const SOURCE_MAP_REGEX = /\/\/[#@]\s*sourceMappingURL=(\S+)/;
+
+const decodeSourceMap = (reference: string) => {
+  const commaIndex = reference.indexOf(",");
+  const metadata = reference.slice(INLINE_SOURCE_MAP_PREFIX.length, commaIndex).toLowerCase();
+  const payload = reference.slice(commaIndex + 1);
+  return metadata.includes(";base64") ? Buffer.from(payload, "base64").toString("utf-8") : decodeURIComponent(payload);
+};
 
 class Checker {
   private program: Program;
-  private code: string;
-  private sourceMap: SourceMap | null;
+  private readonly code: string;
+  private readonly sourceMap: SourceMap | null;
 
   private rootVariables: RootVariable[] | null = null;
   private internalSourceMapConsumer: SourceMapConsumer | null = null;
-  private sourceMapConsumers: { [path: string]: SourceMapConsumer } = {};
+  private sourceMapConsumers: { [path: string]: SourceMapConsumer | null } = {};
   private problems: Problem[] = [];
 
   constructor(program: Program, code: string, sourceMap: SourceMap | null) {
@@ -25,8 +37,8 @@ class Checker {
     this.sourceMap = sourceMap;
   }
 
-  private addProblem = (problem: Problem | null) => {
-    if (problem !== null) this.problems.push(problem);
+  private addProblems = (problems: Problem[]) => {
+    for (const problem of problems) this.problems.push(problem);
   };
 
   private getRootVariables = () => {
@@ -38,14 +50,20 @@ class Checker {
     if (path === undefined) {
       if (this.internalSourceMapConsumer === null) {
         if (this.sourceMap === null) throw new InternalError("Source map doesn’t exist.");
-        const consumer = await new SourceMapConsumer(this.sourceMap);
-        this.internalSourceMapConsumer = consumer;
+        this.internalSourceMapConsumer = await new SourceMapConsumer(this.sourceMap);
       }
       return this.internalSourceMapConsumer;
     }
     if (!(path in this.sourceMapConsumers)) {
-      const sourceMap = await readFile(path, "utf-8");
-      this.sourceMapConsumers[path] = await new SourceMapConsumer(sourceMap);
+      const reference = (await readFile(path, "utf-8")).match(SOURCE_MAP_REGEX)?.[1];
+      if (reference === undefined) {
+        this.sourceMapConsumers[path] = null;
+        return null;
+      }
+      const raw = reference.startsWith(INLINE_SOURCE_MAP_PREFIX)
+        ? decodeSourceMap(reference)
+        : await readFile(join(dirname(path), reference), "utf-8");
+      this.sourceMapConsumers[path] = await new SourceMapConsumer(raw);
     }
     return this.sourceMapConsumers[path];
   };
@@ -55,10 +73,10 @@ class Checker {
     code: this.code,
     nodeIndex: nodeIndex,
     getRootVariables: this.getRootVariables,
-    getSourceMapConsumer: this.getSourceMapConsumer,
+    getSourceMapConsumer: this.getSourceMapConsumer as GetSourceMapConsumer,
   });
 
-  public async check(): Promise<true | Problem[]> {
+  async check() {
     const startNodeIndex = this.program.body.findIndex((node) => node.type !== "ImportDeclaration");
     if (startNodeIndex === -1) return true;
     for (let index = startNodeIndex; index < this.program.body.length; index++) {
@@ -66,7 +84,10 @@ class Checker {
       const context = this.getContext(index);
       switch (node.type) {
         case "ExpressionStatement":
-          this.addProblem(await checkExpressionStatement(node, context));
+          this.addProblems(await checkExpressionStatement(node, context));
+          break;
+        case "ClassDeclaration":
+          this.addProblems(await checkClassDeclaration(node, context));
           break;
       }
     }
