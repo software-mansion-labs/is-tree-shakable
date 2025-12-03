@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "playground": "tsx playground/run.ts",
     "test": "vitest run"
   },
   "bin": {
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@tsconfig/recommended": "1.0.10",
     "@types/node": "24.5.2",
+    "tsx": "4.21.0",
     "typescript": "5.9.2",
     "vitest": "4.0.9"
   },
