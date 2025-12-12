@@ -23,9 +23,11 @@ import { rollup } from "rollup";
 import { parse } from "acorn";
 import { isAbsolute } from "path";
 
+const BARE_SPECIFIER_REGEX = /^[^.\0]/;
+
 const build = async (entryPointPath: string) => {
   const build = await rollup({
-    external: (id) => id !== "is-tree-shakable" && !isAbsolute(id) && /^[^.\0]/.test(id),
+    external: (id) => id !== "is-tree-shakable" && !isAbsolute(id) && BARE_SPECIFIER_REGEX.test(id),
     input: "is-tree-shakable",
     onwarn: () => {},
     plugins: [nodeResolve(), virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
