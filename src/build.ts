@@ -18,13 +18,17 @@
  */
 
 import virtual from "@rollup/plugin-virtual";
+import nodeResolve from "@rollup/plugin-node-resolve";
 import { rollup } from "rollup";
 import { parse } from "acorn";
 
 const build = async (entryPointPath: string) => {
   const build = await rollup({
     input: "is-tree-shakable",
-    plugins: [virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
+    plugins: [
+      virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` }),
+      nodeResolve(),
+    ],
     onwarn: () => {},
   });
   const { output } = await build.generate({ format: "esm", sourcemap: true });
