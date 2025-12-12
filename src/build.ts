@@ -18,14 +18,19 @@
  */
 
 import virtual from "@rollup/plugin-virtual";
+import nodeResolve from "@rollup/plugin-node-resolve";
 import { rollup } from "rollup";
 import { parse } from "acorn";
+import { isAbsolute } from "path";
+
+const BARE_SPECIFIER_REGEX = /^[^.\0]/;
 
 const build = async (entryPointPath: string) => {
   const build = await rollup({
+    external: (id) => id !== "is-tree-shakable" && !isAbsolute(id) && BARE_SPECIFIER_REGEX.test(id),
     input: "is-tree-shakable",
-    plugins: [virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
     onwarn: () => {},
+    plugins: [nodeResolve(), virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
   });
   const { output } = await build.generate({ format: "esm", sourcemap: true });
   const [{ code, map }] = output;

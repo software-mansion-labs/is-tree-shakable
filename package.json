@@ -20,6 +20,7 @@
     "vitest": "4.0.9"
   },
   "dependencies": {
+    "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-virtual": "3.0.2",
     "acorn": "8.15.0",
     "acorn-walk": "8.3.4",
