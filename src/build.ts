@@ -20,7 +20,7 @@
 import virtual from "@rollup/plugin-virtual";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import { rollup } from "rollup";
-import { parse } from "acorn";
+import { Comment, parse } from "acorn";
 import { isAbsolute } from "path";
 import Options from "./options";
 
@@ -35,8 +35,9 @@ const build = async (entryPointPath: string, options: Options) => {
   });
   const { output } = await build.generate({ format: "esm", sourcemap: true });
   const [{ code, map }] = output;
-  const program = parse(code, { ecmaVersion: "latest", locations: true, sourceType: "module" });
-  return { program, code, sourceMap: map };
+  const comments: Comment[] = [];
+  const program = parse(code, { ecmaVersion: "latest", locations: true, onComment: comments, sourceType: "module" });
+  return { program, code, sourceMap: map, comments };
 };
 
 export default build;

@@ -1,4 +1,4 @@
-import { Program } from "acorn";
+import { Comment, Program } from "acorn";
 import checkExpressionStatement from "./checkExpressionStatement";
 import getRootVariables from "./getRootVariables";
 import { SourceMap } from "rollup";
@@ -26,16 +26,19 @@ class Checker {
   private program: Program;
   private readonly code: string;
   private readonly sourceMap: SourceMap | null;
+  private readonly comments: Comment[];
 
   private rootVariables: RootVariable[] | null = null;
   private internalSourceMapConsumer: SourceMapConsumer | null = null;
   private sourceMapConsumers: { [path: string]: SourceMapConsumer | null } = {};
   private problems: Problem[] = [];
+  private hasSuppression = false;
 
-  constructor(program: Program, code: string, sourceMap: SourceMap | null) {
+  constructor(program: Program, code: string, sourceMap: SourceMap | null, comments: Comment[]) {
     this.program = program;
     this.code = code;
     this.sourceMap = sourceMap;
+    this.comments = comments;
   }
 
   private addProblems = (problems: Problem[]) => {
@@ -69,12 +72,18 @@ class Checker {
     return this.sourceMapConsumers[path];
   };
 
+  private reportSuppression = () => {
+    this.hasSuppression = true;
+  };
+
   private getContext = (nodeIndex: number): Context => ({
     body: this.program.body,
     code: this.code,
     nodeIndex: nodeIndex,
     getRootVariables: this.getRootVariables,
     getSourceMapConsumer: this.getSourceMapConsumer as GetSourceMapConsumer,
+    comments: this.comments,
+    reportSuppression: this.reportSuppression,
   });
 
   async check() {
@@ -92,6 +101,7 @@ class Checker {
           break;
       }
     }
+    if (this.problems.length === 0 && this.hasSuppression) return true;
     return this.problems;
   }
 }

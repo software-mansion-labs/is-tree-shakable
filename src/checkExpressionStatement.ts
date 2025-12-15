@@ -2,9 +2,10 @@ import { ExpressionStatement } from "acorn";
 import Context from "./context";
 import getSourcePosition from "./getSourcePosition";
 import isExpressionStatementPossiblySideEffectful from "./isExpressionStatementPossiblySideEffectful";
+import hasSuppression from "./hasSuppression";
 
 const checkExpressionStatement = async (statement: ExpressionStatement, context: Context) => {
-  if (!(await isExpressionStatementPossiblySideEffectful(statement, context))) return [];
+  if (hasSuppression(statement, context) || !(await isExpressionStatementPossiblySideEffectful(statement, context))) return [];
   return [
     {
       description: "Possibly side-effectful top-level expression.",
