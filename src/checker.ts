@@ -5,11 +5,12 @@ import { SourceMap } from "rollup";
 import { SourceMapConsumer } from "source-map";
 import { readFile } from "fs/promises";
 import { dirname, join } from "path";
-import Context, { GetSourceMapConsumer } from "./context";
+import Context from "./context";
 import Problem from "./problem";
 import RootVariable from "./rootVariable";
 import { InternalError } from "./errors";
 import checkClassDeclaration from "./checkClassDeclaration";
+import GetSourceMapConsumer from "./getSourceMapConsumer";
 
 const INLINE_SOURCE_MAP_PREFIX = "data:";
 const SOURCE_MAP_REGEX = /\/\/[#@]\s*sourceMappingURL=(\S+)/;

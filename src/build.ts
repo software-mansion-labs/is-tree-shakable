@@ -22,15 +22,16 @@ import nodeResolve from "@rollup/plugin-node-resolve";
 import { rollup } from "rollup";
 import { parse } from "acorn";
 import { isAbsolute } from "path";
+import Options from "./options";
 
 const BARE_SPECIFIER_REGEX = /^[^.\0]/;
 
-const build = async (entryPointPath: string) => {
+const build = async (entryPointPath: string, options: Options) => {
   const build = await rollup({
     external: (id) => id !== "is-tree-shakable" && !isAbsolute(id) && BARE_SPECIFIER_REGEX.test(id),
     input: "is-tree-shakable",
     onwarn: () => {},
-    plugins: [nodeResolve(), virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
+    plugins: [nodeResolve(options.resolution), virtual({ "is-tree-shakable": `import ${JSON.stringify(entryPointPath)}` })],
   });
   const { output } = await build.generate({ format: "esm", sourcemap: true });
   const [{ code, map }] = output;
