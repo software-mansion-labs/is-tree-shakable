@@ -1,0 +1,19 @@
+name: Publish
+on:
+  push:
+    tags: [v*]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - run: npm install -g npm@11.7.0
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish
