@@ -21,16 +21,20 @@ import getEntryPointPath from "./getEntryPointPath";
     const checker = new Checker(program, code, sourceMap, comments);
     const result = await checker.check();
     if (result === true) return;
-    const uuid = randomUUID();
-    await mkdir(`/tmp/is-tree-shakable`, { recursive: true });
-    if (result.length > 0) {
+    if (Array.isArray(result) && result.length > 0) {
       for (const problem of result) await printProblem(problem);
       console.error();
-    } else {
-      const path = `/tmp/is-tree-shakable/${uuid}.js`;
-      await writeFile(path, code);
-      console.error(`Not tree-shakable. Cause unknown; check output at ${chalk.blue(path)}.`);
+      exit(1);
     }
+    const uuid = randomUUID();
+    await mkdir(`/tmp/is-tree-shakable`, { recursive: true });
+    const path = `/tmp/is-tree-shakable/${uuid}.js`;
+    await writeFile(path, code);
+    if (result === false) {
+      console.log(`No problems found. Suppression active; check output at ${chalk.blue(path)}, and ensure no unwanted retention.`);
+      return;
+    }
+    console.error(`Not tree-shakable. Cause unknown; check output at ${chalk.blue(path)}.`);
     exit(1);
   } catch (error) {
     if (error instanceof InputError) {

@@ -101,7 +101,7 @@ class Checker {
           break;
       }
     }
-    if (this.problems.length === 0 && this.hasSuppression) return true;
+    if (this.problems.length === 0 && this.hasSuppression) return false;
     return this.problems;
   }
 }
