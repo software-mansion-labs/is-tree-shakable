@@ -42,7 +42,7 @@ import getEntryPointPath from "./getEntryPointPath";
     } else if (error instanceof InternalError) {
       console.error(`Internal error: ${error.message}`);
     } else {
-      console.error("Unknown error.");
+      throw error;
     }
     exit(1);
   }
