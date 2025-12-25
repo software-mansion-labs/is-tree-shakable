@@ -39,11 +39,12 @@ import getEntryPointPath from "./getEntryPointPath";
   } catch (error) {
     if (error instanceof InputError) {
       console.error(error.message);
+      exit(1);
     } else if (error instanceof InternalError) {
       console.error(`Internal error: ${error.message}`);
+      exit(1);
     } else {
-      console.error("Unknown error.");
+      throw error;
     }
-    exit(1);
   }
 })();
