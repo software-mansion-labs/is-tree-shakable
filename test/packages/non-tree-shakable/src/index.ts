@@ -3,6 +3,10 @@ number++;
 number = 0;
 console.log(number);
 
+if (globalThis.toString()) {
+  console.log();
+}
+
 class Class {
   static {
     number++;

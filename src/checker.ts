@@ -6,10 +6,12 @@ import { SourceMapConsumer } from "source-map";
 import { readFile } from "fs/promises";
 import { dirname, join } from "path";
 import Context from "./context";
-import Problem from "./problem";
+import SourcePosition from "./sourcePosition";
 import RootVariable from "./rootVariable";
 import { InternalError } from "./errors";
 import checkClassDeclaration from "./checkClassDeclaration";
+import checkIfStatement from "./checkIfStatement";
+import checkBlockStatement from "./checkBlockStatement";
 import GetSourceMapConsumer from "./getSourceMapConsumer";
 
 const INLINE_SOURCE_MAP_PREFIX = "data:";
@@ -31,7 +33,7 @@ class Checker {
   private rootVariables: RootVariable[] | null = null;
   private internalSourceMapConsumer: SourceMapConsumer | null = null;
   private sourceMapConsumers: { [path: string]: SourceMapConsumer | null } = {};
-  private problems: Problem[] = [];
+  private positions: SourcePosition[] = [];
   private hasSuppression = false;
 
   constructor(program: Program, code: string, sourceMap: SourceMap | null, comments: Comment[]) {
@@ -41,8 +43,8 @@ class Checker {
     this.comments = comments;
   }
 
-  private addProblems = (problems: Problem[]) => {
-    for (const problem of problems) this.problems.push(problem);
+  private addPositions = (positions: SourcePosition[]) => {
+    for (const position of positions) this.positions.push(position);
   };
 
   private getRootVariables = () => {
@@ -94,15 +96,21 @@ class Checker {
       const context = this.getContext(index);
       switch (node.type) {
         case "ExpressionStatement":
-          this.addProblems(await checkExpressionStatement(node, context));
+          this.addPositions(await checkExpressionStatement(node, context));
           break;
         case "ClassDeclaration":
-          this.addProblems(await checkClassDeclaration(node, context));
+          this.addPositions(await checkClassDeclaration(node, context));
+          break;
+        case "IfStatement":
+          this.addPositions(await checkIfStatement(node, context));
+          break;
+        case "BlockStatement":
+          this.addPositions(await checkBlockStatement(node, context));
           break;
       }
     }
-    if (this.problems.length === 0 && this.hasSuppression) return false;
-    return this.problems;
+    if (this.positions.length === 0 && this.hasSuppression) return false;
+    return this.positions;
   }
 }
 

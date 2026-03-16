@@ -1,21 +1,23 @@
 import { readFile } from "fs/promises";
-import Problem from "./problem";
+import SourcePosition from "./sourcePosition";
 import chalk from "chalk";
 
-const printProblem = async (problem: Problem) => {
-  const sourceContent = await readFile(problem.position.path, "utf8");
-  const positionSuffix = `${problem.position.start.line}:${problem.position.start.column}`;
+const DESCRIPTION = "Possibly side-effectful expression.";
+
+const printProblem = async (position: SourcePosition) => {
+  const sourceContent = await readFile(position.path, "utf8");
+  const positionSuffix = `${position.start.line}:${position.start.column}`;
   console.error();
-  console.error(`• ${chalk.blue(`${problem.position.path}:${positionSuffix}`)}: ${problem.description}`);
+  console.error(`• ${chalk.blue(`${position.path}:${positionSuffix}`)}: ${DESCRIPTION}`);
   console.error();
-  const sourceLines = sourceContent.split("\n").slice(problem.position.start.line - 1, problem.position.end.line);
-  const gutterWidth = problem.position.start.line.toString().length;
+  const sourceLines = sourceContent.split("\n").slice(position.start.line - 1, position.end.line);
+  const gutterWidth = position.start.line.toString().length;
   for (const [index, line] of sourceLines.entries()) {
-    const lineNumber = problem.position.start.line + index;
+    const lineNumber = position.start.line + index;
     let underlineStartColumn = 0;
     let underlineEndColumn = line.length - 1;
-    if (lineNumber === problem.position.start.line) underlineStartColumn = problem.position.start.column;
-    if (lineNumber === problem.position.end.line) underlineEndColumn = problem.position.end.column;
+    if (lineNumber === position.start.line) underlineStartColumn = position.start.column;
+    if (lineNumber === position.end.line) underlineEndColumn = position.end.column;
     const paddedLineNumber = lineNumber.toString().padStart(gutterWidth);
     const prefix = line.slice(0, underlineStartColumn);
     const underlined = line.slice(underlineStartColumn, underlineEndColumn + 1);

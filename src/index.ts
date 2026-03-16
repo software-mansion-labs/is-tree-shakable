@@ -22,7 +22,7 @@ import getEntryPointPath from "./getEntryPointPath";
     const result = await checker.check();
     if (result === true) return;
     if (Array.isArray(result) && result.length > 0) {
-      for (const problem of result) await printProblem(problem);
+      for (const position of result) await printProblem(position);
       console.error();
       exit(1);
     }
