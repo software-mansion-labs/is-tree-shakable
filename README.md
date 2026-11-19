@@ -99,6 +99,9 @@ for that specific statement with the `is-tree-shakable-suppress`&nbsp;directive:
 /* is-tree-shakable-suppress */ foo();
 ```
 
+For class declarations, place the directive before a member to suppress its computed key and static
+initializer, or before the class to suppress the whole declaration.
+
 ## By [Software Mansion](https://swmansion.com)
 
 Founded in 2012, [Software Mansion](https://swmansion.com) is a software agency with experience in

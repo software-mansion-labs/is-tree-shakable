@@ -9,6 +9,7 @@ import Context from "./context";
 import SourcePosition from "./sourcePosition";
 import RootVariable from "./rootVariable";
 import { InternalError } from "./errors";
+import getClassMemberEffects from "./getClassMemberEffects";
 import checkClassDeclaration from "./checkClassDeclaration";
 import checkIfStatement from "./checkIfStatement";
 import checkBlockStatement from "./checkBlockStatement";
@@ -91,6 +92,7 @@ class Checker {
   async check() {
     const startNodeIndex = this.program.body.findIndex((node) => node.type !== "ImportDeclaration");
     if (startNodeIndex === -1) return true;
+    const classMemberEffects = await getClassMemberEffects(this.program.body, this.code);
     for (let index = startNodeIndex; index < this.program.body.length; index++) {
       const node = this.program.body[index];
       const context = this.getContext(index);
@@ -99,7 +101,7 @@ class Checker {
           this.addPositions(await checkExpressionStatement(node, context));
           break;
         case "ClassDeclaration":
-          this.addPositions(await checkClassDeclaration(node, context));
+          this.addPositions(await checkClassDeclaration(node, context, classMemberEffects));
           break;
         case "IfStatement":
           this.addPositions(await checkIfStatement(node, context));
